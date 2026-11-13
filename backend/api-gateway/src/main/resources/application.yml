@@ -1,0 +1,76 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+              - "http://localhost:3000"
+              - "http://127.0.0.1:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        # User Service Auth Routes (Public)
+        - id: user-service-auth
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/auth/**
+
+        # User Service Profile Routes (Protected)
+        - id: user-service-profile
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**
+
+        # Transaction Service Routes (Protected)
+        - id: transaction-service
+          uri: lb://TRANSACTION-SERVICE
+          predicates:
+            - Path=/api/transactions/**
+
+        # Budget Routes (Protected)
+        - id: budget-service
+          uri: lb://BUDGET-ANALYTICS-SERVICE
+          predicates:
+            - Path=/api/budgets/**
+
+        # Analytics & Reports Routes (Protected)
+        - id: analytics-service
+          uri: lb://BUDGET-ANALYTICS-SERVICE
+          predicates:
+            - Path=/api/analytics/**
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+

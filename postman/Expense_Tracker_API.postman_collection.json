@@ -1,0 +1,327 @@
+{
+  "info": {
+    "name": "Expense & Budget Tracker API",
+    "_postman_id": "expense-tracker-v1",
+    "description": "Complete API collection for the Expense & Budget Tracker microservices application.\n\nSetup:\n1. Run the Login request first — the test script auto-saves the token to {{token}}\n2. All other requests use {{token}} automatically\n\nBase URL: http://localhost:8080 (API Gateway)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "token",   "value": "",                      "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Adhiraj Sharma\",\n  \"email\": \"adhiraj@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login (auto-saves token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Automatically save the JWT token from the response",
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    console.log('Token saved:', json.token.substring(0, 30) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"adhiraj@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 Transactions",
+      "item": [
+        {
+          "name": "Add Income Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/transactions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"INCOME\",\n  \"amount\": 55000,\n  \"category\": \"Salary\",\n  \"description\": \"November monthly salary\",\n  \"date\": \"2026-11-01\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Add Expense Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/transactions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"EXPENSE\",\n  \"amount\": 15000,\n  \"category\": \"Housing\",\n  \"description\": \"November apartment rent\",\n  \"date\": \"2026-11-02\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List All Transactions (paginated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?page=0&size=10",
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter — by type EXPENSE",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?type=EXPENSE",
+              "query": [{ "key": "type", "value": "EXPENSE" }]
+            }
+          }
+        },
+        {
+          "name": "Filter — by month",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?month=2026-11",
+              "query": [{ "key": "month", "value": "2026-11" }]
+            }
+          }
+        },
+        {
+          "name": "Filter — by category and amount range",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?category=Housing&minAmount=10000&maxAmount=20000",
+              "query": [
+                { "key": "category",  "value": "Housing"  },
+                { "key": "minAmount", "value": "10000"    },
+                { "key": "maxAmount", "value": "20000"    }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search — text search",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?search=salary",
+              "query": [{ "key": "search", "value": "salary" }]
+            }
+          }
+        },
+        {
+          "name": "Update Transaction",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/transactions/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"EXPENSE\",\n  \"amount\": 14500,\n  \"category\": \"Housing\",\n  \"description\": \"November rent (negotiated)\",\n  \"date\": \"2026-11-02\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Transaction",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/transactions/1"
+          }
+        },
+        {
+          "name": "Get Balance Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/transactions/summary"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💼 Budgets",
+      "item": [
+        {
+          "name": "Set Budget — Housing",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/budgets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Housing\",\n  \"budgetLimit\": 15000,\n  \"month\": 11,\n  \"year\": 2026\n}"
+            }
+          }
+        },
+        {
+          "name": "Set Budget — Groceries",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/budgets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Groceries\",\n  \"budgetLimit\": 9000,\n  \"month\": 11,\n  \"year\": 2026\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Budgets with Alerts (Nov 2026)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/budgets?month=11&year=2026",
+              "query": [
+                { "key": "month", "value": "11" },
+                { "key": "year",  "value": "2026" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Budget",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/budgets/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Housing\",\n  \"budgetLimit\": 16000,\n  \"month\": 11,\n  \"year\": 2026\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Budget",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/budgets/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Analytics",
+      "item": [
+        {
+          "name": "Overall Summary (income, expense, balance)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/analytics/summary"
+          }
+        },
+        {
+          "name": "Monthly Income vs Expense (last 6 months)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/monthly?months=6",
+              "query": [{ "key": "months", "value": "6" }]
+            }
+          }
+        },
+        {
+          "name": "Category Breakdown (expenses by category)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/analytics/categories"
+          }
+        },
+        {
+          "name": "Month-over-Month Category Comparison",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/analytics/compare"
+          }
+        },
+        {
+          "name": "Spending Prediction (3-month moving average)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/analytics/predict"
+          }
+        },
+        {
+          "name": "Yearly Report 2026",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/report?year=2026",
+              "query": [{ "key": "year", "value": "2026" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

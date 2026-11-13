@@ -1,0 +1,123 @@
+version: '3.8'
+
+# ============================================================
+# Docker Compose for Expense & Budget Tracker
+# Start everything with: docker-compose up --build
+# Stop with:             docker-compose down
+# ============================================================
+
+services:
+
+  # ── 1. Eureka Service Registry ──────────────────────────────
+  discovery-server:
+    build: ./backend/discovery-server
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── 2. API Gateway ───────────────────────────────────────────
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+
+  # ── 3. User Service ──────────────────────────────────────────
+  user-service:
+    build: ./backend/user-service
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      # For MySQL: uncomment and set these
+      # - SPRING_DATASOURCE_URL=jdbc:mysql://user-db:3306/user_db
+      # - SPRING_DATASOURCE_USERNAME=root
+      # - SPRING_DATASOURCE_PASSWORD=password
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+
+  # ── 4. Transaction Service ───────────────────────────────────
+  transaction-service:
+    build: ./backend/transaction-service
+    container_name: transaction-service
+    ports:
+      - "8082:8082"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      # For MySQL: uncomment and set these
+      # - SPRING_DATASOURCE_URL=jdbc:mysql://transaction-db:3306/transaction_db
+      # - SPRING_DATASOURCE_USERNAME=root
+      # - SPRING_DATASOURCE_PASSWORD=password
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+
+  # ── 5. Budget Analytics Service ──────────────────────────────
+  budget-analytics-service:
+    build: ./backend/budget-analytics-service
+    container_name: budget-analytics-service
+    ports:
+      - "8083:8083"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      # For MySQL: uncomment and set these
+      # - SPRING_DATASOURCE_URL=jdbc:mysql://budget-db:3306/budget_db
+      # - SPRING_DATASOURCE_USERNAME=root
+      # - SPRING_DATASOURCE_PASSWORD=password
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+
+  # ── 6. React Frontend (served by Nginx) ──────────────────────
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+
+# ─────────────────────────────────────────────────────────────
+# Optional MySQL databases (uncomment to use real persistence)
+# ─────────────────────────────────────────────────────────────
+#  user-db:
+#    image: mysql:8.0
+#    environment:
+#      MYSQL_ROOT_PASSWORD: password
+#      MYSQL_DATABASE: user_db
+#    volumes:
+#      - user-db-data:/var/lib/mysql
+#
+#  transaction-db:
+#    image: mysql:8.0
+#    environment:
+#      MYSQL_ROOT_PASSWORD: password
+#      MYSQL_DATABASE: transaction_db
+#    volumes:
+#      - transaction-db-data:/var/lib/mysql
+#
+#  budget-db:
+#    image: mysql:8.0
+#    environment:
+#      MYSQL_ROOT_PASSWORD: password
+#      MYSQL_DATABASE: budget_db
+#    volumes:
+#      - budget-db-data:/var/lib/mysql
+#
+#volumes:
+#  user-db-data:
+#  transaction-db-data:
+#  budget-db-data:
+
